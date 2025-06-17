@@ -1,18 +1,25 @@
 name: Build cross-platform executables
 
+# Give the GITHUB_TOKEN permission to create releases and upload assets
 permissions:
   contents: write
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -29,11 +36,13 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows EXE
         uses: actions/upload-release-asset@v1
@@ -42,12 +51,16 @@ jobs:
           asset_path: dist/Bingo-Kids.exe
           asset_name: Bingo-Kids-windows.exe
           asset_content_type: application/vnd.microsoft.portable-executable
-
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   build-macos:
     runs-on: macos-latest
+    permissions:
+      contents: write
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -62,13 +75,15 @@ jobs:
         run: |
           python3 -m PyInstaller --onefile --windowed --name Bingo-Kids display.py
 
-      - name: Create Release
+      - name: Create Release (macOS)
         id: create_release_macos
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload macOS binary
         uses: actions/upload-release-asset@v1
@@ -77,3 +92,4 @@ jobs:
           asset_path: dist/Bingo-Kids
           asset_name: Bingo-Kids-macos
           asset_content_type: application/octet-stream
+          token: ${{ secrets.GITHUB_TOKEN }}
