@@ -7,19 +7,21 @@ print("Bingo started")
 
 #settings
 MAX_NUMBER = 99
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 1400
+WINDOW_HEIGHT = 750
 
 #colors,fonts etc
 BG_COLOR = (30, 30, 30)
 TEXT_COLOR = (255, 255, 255)
 BUTTON_COLOR = (70, 130, 180)
-BUTTON_HOVER = (100, 160, 210)
+BUTTON_HOVER = (0, 255, 0)
 FONT_SIZE_L = 96
-FONT_SIZE_S = 24
-GRID_COLS = 10
+FONT_SIZE_S = 30
+CELL_SIZE = 60
+GRID_COLS = 20
 GRID_ROWS = 10
-GRID_PADDING = 10
+CELL_SPACING = 8
+GRID_PADDING = 20
 
 #initializations
 pygame.init()
@@ -30,13 +32,14 @@ font_large = pygame.font.SysFont(None, FONT_SIZE_L)
 font_small = pygame.font.SysFont(None, FONT_SIZE_S)
 freetype_font = pygame.freetype.SysFont(None, FONT_SIZE_L)
 clock = pygame.time.Clock()
+first_click = False
 
 logic = BingoLogic(MAX_NUMBER)
 print("logic initialized with max number: ", MAX_NUMBER)
 
 #button setup
 button_rect = pygame.Rect((WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT - 100, 200, 60))
-start_button_rect = pygame.Rect((WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT - 100, 200, 60))
+start_button_rect = pygame.Rect((WINDOW_WIDTH // 2 - 150, WINDOW_HEIGHT - 100, 300, 60))
 
 def draw_button(surface, rect, text, mouse_pos):
     color = BUTTON_HOVER if rect.collidepoint(mouse_pos) else BUTTON_COLOR
@@ -44,6 +47,14 @@ def draw_button(surface, rect, text, mouse_pos):
     label = font_small.render(text, True, TEXT_COLOR)
     label_rect = label.get_rect(center = rect.center)
     surface.blit(label, label_rect)
+
+def draw_multiline(surface, text, font, color, center_x, start_y):
+    lines = text.split('\n')
+    line_height = font.get_linesize()
+    for i, line in enumerate(lines):
+        img = font.render(line, True, color)
+        rect = img.get_rect(center = (center_x, start_y + i * line_height))
+        surface.blit(img, rect)
 
 def draw_startup(surface, mouse_pos):
     title = font_large.render("BINGO Ε' ΤΑΞΗΣ", True, TEXT_COLOR)
@@ -53,43 +64,40 @@ def draw_startup(surface, mouse_pos):
 
 def draw_current(surface, number):
     center_x = WINDOW_WIDTH // 2
-    start_y = WINDOW_HEIGHT // 3
+    start_y = WINDOW_HEIGHT // 6
     if number is None:
-        text = "Όλες οι μπάλες τραβήχτηκαν!\nΕλέξτε για νικητή"
-        freetype_font.render_to(
-            surface,
-            (center_x, start_y),
-            text,
-            fgcolor = TEXT_COLOR,
-            size = FONT_SIZE_L,
-            style = pygame.freetype.STYLE_DEFAULT,
-            bgcolor = None,
-            rotation = 0
-        )
-        return
-    
-    img = font_large.render(str(number), True, TEXT_COLOR)
-    rect = img.get_rect(center = (center_x, start_y))
-    surface.blit(img, rect)
+        if first_click == True:
+            text = "Όλες οι μπάλες τραβήχτηκαν!\nΕλέξτε για νικητή"
+            draw_multiline(surface, text, font_large, TEXT_COLOR, center_x, start_y)
+        else:
+            text = "Το παιχνίδι ξεκίνησε!\nΤραβήξτε την πρώτη μπάλα"
+            draw_multiline(surface, text, font_large, TEXT_COLOR, center_x, start_y)
+    else:
+        img = font_large.render(str(number), True, TEXT_COLOR)
+        rect = img.get_rect(center = (center_x, start_y))
+        surface.blit(img, rect)
 
 def draw_history(surface, drawn_list):
-    cell_w = (WINDOW_WIDTH - 2 * GRID_PADDING) // GRID_COLS
-    cell_h = (WINDOW_HEIGHT // 3 - GRID_PADDING) // GRID_ROWS
-
     for idx, num in enumerate(drawn_list):
         row = idx // GRID_COLS
         col = idx % GRID_COLS
-        x = GRID_PADDING + col * cell_w
-        y = WINDOW_HEIGHT // 3 + GRID_PADDING + row * cell_h
-        pygame.draw.rect(surface, BUTTON_COLOR, (x, y, cell_w - 2, cell_h - 2), border_radius = 4)
+        x = GRID_PADDING + col * (CELL_SIZE + CELL_SPACING)
+        y = WINDOW_HEIGHT // 3 + GRID_PADDING + row * (CELL_SIZE + CELL_SPACING)
+        pygame.draw.rect(
+            surface,
+            BUTTON_COLOR,
+            (x, y, CELL_SIZE, CELL_SIZE),
+            border_radius = 4
+        )
         txt = font_small.render(str(num), True, TEXT_COLOR)
-        txt_rect = txt.get_rect(center = (x + cell_w//2, y + cell_h//2))
+        txt_rect = txt.get_rect(center = (x + CELL_SIZE/2, y + CELL_SIZE/2))
         surface.blit(txt, txt_rect)
 
 def main():
     current_number = None
     running = True
     state = 'startup'
+    global first_click
 
     print("entering main loop")
     while running:
@@ -105,6 +113,7 @@ def main():
                 elif state == 'game':
                     if button_rect.collidepoint(event.pos):
                         current_number = logic.draw()
+                        first_click = True
 
         screen.fill(BG_COLOR)
         if state == 'startup':
