@@ -1,5 +1,8 @@
 name: Build cross-platform executables
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
