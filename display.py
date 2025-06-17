@@ -1,6 +1,5 @@
 import sys
 import pygame
-import pygame.freetype
 from logic import BingoLogic
 
 print("Bingo started")
@@ -30,7 +29,6 @@ screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Bingo Ε' Τάξης")
 font_large = pygame.font.SysFont(None, FONT_SIZE_L)
 font_small = pygame.font.SysFont(None, FONT_SIZE_S)
-freetype_font = pygame.freetype.SysFont(None, FONT_SIZE_L)
 clock = pygame.time.Clock()
 first_click = False
 
