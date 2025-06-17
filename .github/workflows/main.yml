@@ -1,0 +1,63 @@
+name: Build cross-platform executables
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          venv\Scripts\Activate.ps1
+          pip install pyinstaller pygame
+      - name: Build Windows EXE
+        run: pyinstaller --onefile --windowed --name BingoCaller display.py
+      - name: Publish Windows EXE
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Windows EXE
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.publish.outputs.upload_url }}
+          asset_path: dist/BingoCaller.exe
+          asset_name: BingoCaller-windows.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install pyinstaller pygame
+      - name: Build macOS binary
+        run: pyinstaller --onefile --windowed --name BingoCaller display.py
+      - name: Publish macOS binary
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload macOS binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.publish.outputs.upload_url }}
+          asset_path: dist/BingoCaller
+          asset_name: BingoCaller-macos
+          asset_content_type: application/octet-stream
